@@ -1,0 +1,41 @@
+.main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    background-color: #f4f4f4;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    color: #1976d2;
+  }
+  
+  p {
+    font-size: 1.2rem;
+    color: #555;
+    margin: 20px 0;
+  }
+  
+  .button-container {
+    display: flex;
+    gap: 20px;
+  }
+  
+  .auth-button {
+    padding: 15px 30px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: white;
+    background-color: #1976d2;
+    transition: background-color 0.3s ease;
+  }
+  
+  .auth-button:hover {
+    background-color: #0056a3;
+  }
+  
