@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure Functions: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python project to Azure Function App - feedback-system-func
+name: Build and Deploy Python Azure Function App - feedback-system-func
 
 on:
   push:
@@ -11,63 +11,68 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  PYTHON_VERSION: '3.10' # set this to the python version to use (supports 3.6, 3.7, 3.8)
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: './backend' # Set this to the path to your Azure Function project
+  PYTHON_VERSION: '3.10' # Set this to the Python version to use (supports 3.6, 3.7, 3.8, 3.10)
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    name: Build and Package Azure Function
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Python version
+      # Step 2: Set up Python version
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Create and start virtual environment
+      # Step 3: Create and activate a virtual environment
+      - name: Create virtual environment
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }} # Navigate to the backend directory
         run: |
           python -m venv venv
           source venv/bin/activate
 
+      # Step 4: Install dependencies
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }} # Navigate to the backend directory
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
 
-      # Optional: Add step to run tests here
+      # Step 5: Zip backend for deployment
+      - name: Create deployment package
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        run: |
+          zip -r ../release.zip . # Create the deployment artifact
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
-
-      - name: Upload artifact for deployment job
+      # Step 6: Upload deployment artifact for deploy job
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: python-app
-          path: |
-            release.zip
-            !venv/
+          name: azure-function-package
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
+    name: Deploy to Azure Function
     needs: build
-    
-    
     steps:
-      - name: Download artifact from build job
+      # Step 1: Download the deployment package from the build job
+      - name: Download deployment artifact
         uses: actions/download-artifact@v4
         with:
-          name: python-app
+          name: azure-function-package
 
-      - name: Unzip artifact for deployment
-        run: unzip release.zip     
-        
-      - name: 'Deploy to Azure Functions'
+      # Step 2: Deploy to Azure Functions
+      - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
-        id: deploy-to-function
         with:
-          app-name: 'feedback-system-func'
-          slot-name: 'Production'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          app-name: 'feedback-system-func' # Replace with your Azure Function App name
+          slot-name: 'Production' # Replace with your deployment slot if applicable
+          package: release.zip # Deployment artifact
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D4CB348060A74F809BE825B7B338DBD6 }}
-          sku: 'flexconsumption'
-        
+          sku: 'flexconsumption' # Ensure this matches your Azure Function's SKU
