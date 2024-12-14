@@ -7,9 +7,13 @@ const FeedbackCharts = ({ feedbackData }) => {
   useEffect(() => {
     Chart.register(...registerables);
 
-    Object.keys(chartRefs.current).forEach((key) => {
-      if (chartRefs.current[key]) {
-        chartRefs.current[key].destroy();
+    // Copy chartRefs.current to a local variable
+    const localChartRefs = chartRefs.current;
+
+    // Destroy existing charts if any
+    Object.keys(localChartRefs).forEach((key) => {
+      if (localChartRefs[key]) {
+        localChartRefs[key].destroy();
       }
     });
 
@@ -42,7 +46,7 @@ const FeedbackCharts = ({ feedbackData }) => {
       const labels = Object.keys(data);
       const values = Object.values(data);
 
-      chartRefs.current[question] = new Chart(ctx, {
+      localChartRefs[question] = new Chart(ctx, {
         type: "bar",
         data: {
           labels,
@@ -74,9 +78,10 @@ const FeedbackCharts = ({ feedbackData }) => {
     });
 
     return () => {
-      Object.keys(chartRefs.current).forEach((key) => {
-        if (chartRefs.current[key]) {
-          chartRefs.current[key].destroy();
+      // Use the local reference for cleanup
+      Object.keys(localChartRefs).forEach((key) => {
+        if (localChartRefs[key]) {
+          localChartRefs[key].destroy();
         }
       });
     };
